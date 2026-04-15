@@ -1,0 +1,425 @@
+{
+  "name": "Eco-Sort AI",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y0oeqj_zl_lTucX9vUrR1m48Ma6HuEBsyLc72At-OLo",
+          "mode": "list",
+          "cachedResultName": "Eco-Sort AI",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y0oeqj_zl_lTucX9vUrR1m48Ma6HuEBsyLc72At-OLo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "User Input",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y0oeqj_zl_lTucX9vUrR1m48Ma6HuEBsyLc72At-OLo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json['Full Name'] }}",
+            "Location": "={{ $json['Area/Pincode'] }}",
+            "Waste Item": "={{ $json['Waste Description'] }}",
+            "Timestamp": "={{ $now.format('dd MMMM yyyy, HH:mm') }}",
+            "Whatsapp Number": "={{ $json['Whatsapp Number'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Whatsapp Number",
+              "displayName": "Whatsapp Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Waste Item",
+              "displayName": "Waste Item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "780ffc30-3e74-4bc1-b64d-93e7aee1badf",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B3TvpsYsRFHhLROx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.google.com/maps",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "ec975251-4d0d-4c0e-866d-1bed90e5796b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $node[\"Message a model\"].json[\"content\"][\"parts\"][0][\"text\"];\n// This removes the ```json and ``` backticks so n8n can read it\nconst cleanJson = JSON.parse(rawText.replace(/```json|```/g, \"\"));\nreturn cleanJson;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        -96
+      ],
+      "id": "b5e98b19-6813-47dc-997c-60fb576aff35",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=SYSTEM ROLE:\nYou are the \"Global Eco-Sort AI Specialist.\" Your mission is to provide accurate waste classification and disposal routing for users WORLDWIDE.\n\nMASTER CLASSIFICATION GUIDE (Global Standard):\n1. WET WASTE: Organic & Biodegradable items (Food scraps, peels, etc.).\n2. DRY WASTE: Recyclables (Paper, plastic, glass, metal, cardboard, etc.).\n3. SANITARY WASTE: Personal hygiene & Bio-medical products (Masks, bandages, etc.).\n4. SPECIAL CARE: Hazardous, Toxic, or Electronic materials (Batteries, RAM, fans, chemicals, medicines, etc.).\n\nUSER INPUT:\nDescription: \"{{ $node[\"On form submission\"].json[\"Waste Description\"] }}\"\nLocation: \"{{ $node[\"On form submission\"].json[\"Area/Pincode\"] }}\"\n\nTASK:\n1. Identify ONLY the specific items mentioned in the User Input.\n2. Select the correct category from the Global Guide above.\n3. Use your search tool to find the name and full address of the nearest authorized recycling or hazardous waste center based on the User's provided Location.\n\nOUTPUT JSON ONLY:\n{\n  \"item_name\": \"Items identified from user input\",\n  \"category\": \"The specific Category Name (Wet, Dry, Sanitary, or Special Care)\",\n  \"environmental_impact\": \"1-sentence on the specific danger these items pose to the environment if not handled correctly.\",\n  \"disposal_instruction\": \"1-sentence safety instruction for the user.\",\n  \"nearest_center\": \"Name and full address of a real authorized center near the user's location.\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "f9f2c5f1-4bd9-49f5-bf75-ddbf633ede55",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ACfuu4IUgwXxbXL5",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y0oeqj_zl_lTucX9vUrR1m48Ma6HuEBsyLc72At-OLo",
+          "mode": "list",
+          "cachedResultName": "Eco-Sort AI",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y0oeqj_zl_lTucX9vUrR1m48Ma6HuEBsyLc72At-OLo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 892969748,
+          "mode": "list",
+          "cachedResultName": "Output",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y0oeqj_zl_lTucX9vUrR1m48Ma6HuEBsyLc72At-OLo/edit#gid=892969748"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "User Name": "={{ $('Append row in sheet').item.json.Name }}",
+            "Identified Item": "={{ $json.item_name }}",
+            "Waste Category": "={{ $json.category }}",
+            "Environmental Impact": "={{ $json.environmental_impact }}",
+            "Nearest Center": "={{ $json.nearest_center }}",
+            "Time Stamp": "={{ $('Append row in sheet').item.json.Timestamp }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "User Name",
+              "displayName": "User Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Identified Item",
+              "displayName": "Identified Item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Waste Category",
+              "displayName": "Waste Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Environmental Impact",
+              "displayName": "Environmental Impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nearest Center",
+              "displayName": "Nearest Center",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Time Stamp",
+              "displayName": "Time Stamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "5a44b23c-5cc3-4d5c-aebc-6d45fab629ed",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B3TvpsYsRFHhLROx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Eco-Sort AI",
+        "formDescription": "Eco-Sort AI: Intelligent Waste Management\n\nStop wondering how to dispose of your waste. Simply describe your item below, and our AI will instantly identify the correct recycling category and the nearest certified disposal center in your region.\n\nYour personalized report, including environmental impact and location coordinates, will be sent directly to your WhatsApp for easy access. Fast, reliable, and built for a sustainable future.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Whatsapp Number",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Area/Pincode",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Waste Description",
+              "fieldType": "textarea",
+              "placeholder": "e.g. Old batteries, broken laptop/mobile, plastic bottles",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "=Analysis Complete! \n\nHello, \n\nThank you for using Eco-Sort AI. \n\nA detailed disposal report and the nearest center location have been sent to your WhatsApp Number.\n\n— Thank You, Visit Again"
+            }
+          },
+          "useWorkflowTimezone": true
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "0be96aef-e6e3-4ed7-9ca3-4237b2361448",
+      "name": "On form submission",
+      "webhookId": "87a94b99-aaf3-409e-a538-3e5bb0a733c9",
+      "notesInFlow": false,
+      "alwaysOutputData": false,
+      "notes": "Please Wait..."
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1062390903629141",
+        "recipientPhoneNumber": "=+91{{ $('On form submission').item.json['Whatsapp Number'] }}",
+        "textBody": "=Hello {{ $('On form submission').item.json['Full Name'] }}! \n♻️ *Your Eco-Sort Report is ready.*\n\n📦 *Identified Item: {{ $json['Identified Item'] }}\n📂 *Waste Category: {{ $json['Waste Category'] }}\n⚠️ *Environmental Impact: {{ $json['Environmental Impact'] }}\n📍 *Nearest Center: {{ $json['Nearest Center'] }}\n\n\"Small steps in recycling today lead to a cleaner, greener tomorrow!\"",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        -96
+      ],
+      "id": "93abec32-c6cf-4558-9957-7615b755ec58",
+      "name": "Send message",
+      "webhookId": "fb1bc45b-b022-4f9e-9de1-9559b7007d19",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "JBsBIrIgwZat7Xtp",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "839190c2-a60c-4f28-b259-add159f3f0e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "46a9c872fb98faba28663c811e73a141069066c79f7923a57361b235cd8b89fe"
+  },
+  "id": "YP7KSfQ0FqpxgtP2",
+  "tags": []
+}
